@@ -1,19 +1,25 @@
 <script lang="ts">
-  import { api } from '$lib/api';
+  import { api, setServerUrl, getServerUrl } from '$lib/api';
 
   let { onConnected }: { onConnected: () => void } = $props();
 
-  let ip = $state('');
+  let serverUrl = $state(getServerUrl());
+  let ip = $state(localStorage.getItem('tv-ip') || '');
   let error = $state('');
   let loading = $state(false);
 
   async function handleConnect() {
+    if (!serverUrl.match(/^https?:\/\/.+/)) {
+      error = 'Enter a valid server URL (e.g. http://192.168.1.x:3001)';
+      return;
+    }
     if (!ip.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
-      error = 'Enter a valid IP address';
+      error = 'Enter a valid TV IP address';
       return;
     }
     loading = true;
     error = '';
+    setServerUrl(serverUrl);
     try {
       const res = await api.connect(ip);
       if (res.ok) {
@@ -32,9 +38,18 @@
 
 <div class="connect-screen">
   <h1>TV Remote</h1>
-  <p class="subtitle">Enter your Android TV's IP address</p>
 
-  <div class="input-group">
+  <label class="field">
+    <span>Server URL</span>
+    <input
+      type="url"
+      placeholder="http://192.168.1.x:3001"
+      bind:value={serverUrl}
+    />
+  </label>
+
+  <label class="field">
+    <span>TV IP Address</span>
     <input
       type="text"
       inputmode="decimal"
@@ -42,16 +57,21 @@
       bind:value={ip}
       onkeydown={(e) => e.key === 'Enter' && handleConnect()}
     />
-    <button onclick={handleConnect} disabled={loading}>
-      {loading ? 'Connecting...' : 'Connect'}
-    </button>
-  </div>
+  </label>
+
+  <button class="connect-btn" onclick={handleConnect} disabled={loading}>
+    {loading ? 'Connecting...' : 'Connect'}
+  </button>
 
   {#if error}
     <p class="error">{error}</p>
   {/if}
 
-  <p class="hint">Make sure ADB debugging is enabled on your TV<br/>Settings → Device Preferences → Developer Options</p>
+  <p class="hint">
+    1. Run the server on your local network<br/>
+    2. Enter the server's IP and port above<br/>
+    3. Enter your Android TV's IP address
+  </p>
 </div>
 
 <style>
@@ -66,27 +86,35 @@
     text-align: center;
   }
   h1 { font-size: 2rem; }
-  .subtitle { color: var(--text-muted); }
-  .input-group {
+  .field {
     display: flex;
-    gap: 0.5rem;
+    flex-direction: column;
+    gap: 0.25rem;
     width: 100%;
     max-width: 320px;
+    text-align: left;
+  }
+  .field span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    padding-left: 0.25rem;
   }
   input {
-    flex: 1;
     padding: 0.75rem 1rem;
     border-radius: var(--radius);
     border: 1px solid var(--bg-button);
     background: var(--bg-surface);
     color: var(--text);
-    font-size: 1.1rem;
+    font-size: 1rem;
     text-align: center;
   }
-  .input-group button {
-    padding: 0.75rem 1.25rem;
-    white-space: nowrap;
+  .connect-btn {
+    width: 100%;
+    max-width: 320px;
+    padding: 0.75rem;
+    font-size: 1rem;
+    background: var(--accent);
   }
   .error { color: var(--accent); }
-  .hint { color: var(--text-muted); font-size: 0.85rem; margin-top: 1rem; }
+  .hint { color: var(--text-muted); font-size: 0.8rem; margin-top: 1rem; line-height: 1.6; }
 </style>

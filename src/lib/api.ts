@@ -1,4 +1,13 @@
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+let BASE = localStorage.getItem('server-url') || import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+export function setServerUrl(url: string) {
+  BASE = url.replace(/\/+$/, '');
+  localStorage.setItem('server-url', BASE);
+}
+
+export function getServerUrl(): string {
+  return BASE;
+}
 
 async function post(path: string, body: object = {}): Promise<any> {
   const res = await fetch(`${BASE}${path}`, {
