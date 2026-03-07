@@ -4,7 +4,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { connect, disconnect, sendKey, sendText, launchApp, getStatus } from './adb.js';
+import { connect, disconnect, sendKey, sendText, launchApp, getStatus, KEY_MAP } from './samsung.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -45,7 +45,9 @@ app.post('/api/disconnect', async (_req, res) => {
 
 app.post('/api/key', async (req, res) => {
   try {
-    await sendKey(req.body.key);
+    // Map Android keycodes to Samsung keycodes
+    const key = KEY_MAP[req.body.key] || req.body.key;
+    await sendKey(key);
     res.json({ ok: true });
   } catch (e: any) {
     res.status(500).json({ ok: false, error: e.message });

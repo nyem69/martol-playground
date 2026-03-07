@@ -1,13 +1,14 @@
 <script lang="ts">
   import { api } from '$lib/api';
 
+  // Samsung Tizen app IDs
   const apps = [
-    { name: 'YouTube', pkg: 'com.google.android.youtube.tv', icon: '▶' },
-    { name: 'Netflix', pkg: 'com.netflix.ninja', icon: 'N' },
-    { name: 'Disney+', pkg: 'com.disney.disneyplus', icon: 'D' },
-    { name: 'Prime', pkg: 'com.amazon.amazonvideo.livingroom', icon: 'P' },
-    { name: 'Spotify', pkg: 'com.spotify.tv.android', icon: '♫' },
-    { name: 'Plex', pkg: 'com.plexapp.android', icon: '⏵' },
+    { name: 'YouTube', pkg: '111299001912', icon: '▶' },
+    { name: 'Netflix', pkg: '3201907018807', icon: 'N' },
+    { name: 'Disney+', pkg: '3201901017640', icon: 'D' },
+    { name: 'Prime', pkg: '3201910019365', icon: 'P' },
+    { name: 'Spotify', pkg: '3201606009684', icon: '♫' },
+    { name: 'Apple TV', pkg: '3201807016597', icon: 'A' },
   ];
 
   function launch(pkg: string) {
