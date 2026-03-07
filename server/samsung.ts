@@ -9,7 +9,8 @@ const APP_NAME = Buffer.from('TV Remote').toString('base64');
 let token: string | null = null;
 
 function getWsUrl(ip: string): string {
-  let url = `ws://${ip}:8001/api/v2/channels/samsung.remote.control?name=${APP_NAME}`;
+  // Use WSS on port 8002 — newer Samsung TVs require SSL for the auth prompt to appear
+  let url = `wss://${ip}:8002/api/v2/channels/samsung.remote.control?name=${APP_NAME}`;
   if (token) {
     url += `&token=${token}`;
   }
@@ -28,10 +29,10 @@ export async function connect(ip: string): Promise<string> {
     console.log(`[samsung] Connecting to ${url}`);
 
     const timeout = setTimeout(() => {
-      reject(new Error('Connection timeout'));
-    }, 10000);
+      reject(new Error('Connection timeout — make sure the TV is on and check for a permission popup'));
+    }, 15000);
 
-    const socket = new WebSocket(url);
+    const socket = new WebSocket(url, { rejectUnauthorized: false });
 
     socket.on('open', () => {
       console.log('[samsung] WebSocket connected');
