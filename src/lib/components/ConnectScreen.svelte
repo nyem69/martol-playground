@@ -9,8 +9,12 @@
   let loading = $state(false);
 
   async function handleConnect() {
+    // Auto-prepend http:// if missing
+    if (serverUrl && !serverUrl.match(/^https?:\/\//)) {
+      serverUrl = 'http://' + serverUrl;
+    }
     if (!serverUrl.match(/^https?:\/\/.+/)) {
-      error = 'Enter a valid server URL (e.g. http://192.168.1.x:3001)';
+      error = 'Enter a valid server URL';
       return;
     }
     if (!ip.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
