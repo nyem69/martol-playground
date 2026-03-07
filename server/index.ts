@@ -66,6 +66,10 @@ app.post('/api/app/launch', async (req, res) => {
   }
 });
 
+app.get('/', (_req, res) => {
+  res.json({ name: 'TV Remote Server', status: 'running' });
+});
+
 app.get('/api/status', async (_req, res) => {
   const status = await getStatus();
   res.json(status);
