@@ -1,4 +1,5 @@
-let BASE = localStorage.getItem('server-url') || import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// If served from the Express server, use same origin (empty string). Otherwise use saved/configured URL.
+let BASE = localStorage.getItem('server-url') || import.meta.env.VITE_API_URL || '';
 
 export function setServerUrl(url: string) {
   BASE = url.replace(/\/+$/, '');

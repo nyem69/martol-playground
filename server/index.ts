@@ -2,7 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { connect, disconnect, sendKey, sendText, launchApp, getStatus } from './adb.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.use(cors());
@@ -66,8 +70,12 @@ app.post('/api/app/launch', async (req, res) => {
   }
 });
 
+// Serve the built frontend (so everything runs over HTTP from one origin)
+const buildPath = join(__dirname, '..', 'build');
+app.use(express.static(buildPath));
+
 app.get('/', (_req, res) => {
-  res.json({ name: 'TV Remote Server', status: 'running' });
+  res.sendFile(join(buildPath, 'index.html'));
 });
 
 app.get('/api/status', async (_req, res) => {
