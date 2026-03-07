@@ -33,7 +33,7 @@ export const api = {
   status: () => get('/api/status')
 };
 
-export type Status = { connected: boolean; device: string | null };
+export type Status = { connected: boolean; device: string | null; detail?: string };
 
 export function createStatusSocket(onStatus: (s: Status) => void): WebSocket {
   const wsUrl = BASE.replace(/^http/, 'ws') + '/api/ws';

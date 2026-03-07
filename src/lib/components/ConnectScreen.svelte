@@ -13,9 +13,9 @@
     if (serverUrl && !serverUrl.match(/^https?:\/\//)) {
       serverUrl = 'http://' + serverUrl;
     }
-    if (!serverUrl.match(/^https?:\/\/.+/)) {
-      error = 'Enter a valid server URL';
-      return;
+    // Server URL is optional when served from same origin
+    if (serverUrl) {
+      setServerUrl(serverUrl);
     }
     if (!ip.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
       error = 'Enter a valid TV IP address';
@@ -23,14 +23,13 @@
     }
     loading = true;
     error = '';
-    setServerUrl(serverUrl);
     try {
       const res = await api.connect(ip);
       if (res.ok) {
         localStorage.setItem('tv-ip', ip);
         onConnected();
       } else {
-        error = res.error || 'Connection failed';
+        error = res.error || res.result || 'Connection failed';
       }
     } catch {
       error = 'Cannot reach server. Is it running?';
@@ -44,10 +43,10 @@
   <h1>TV Remote</h1>
 
   <label class="field">
-    <span>Server URL</span>
+    <span>Server URL (leave empty if same origin)</span>
     <input
       type="url"
-      placeholder="http://192.168.1.x:3001"
+      placeholder="same origin"
       bind:value={serverUrl}
     />
   </label>

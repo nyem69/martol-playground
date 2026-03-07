@@ -10,6 +10,7 @@
   import AppLauncher from '$lib/components/AppLauncher.svelte';
 
   let connected = $state(false);
+  let statusDetail = $state('');
   let showConnect = $state(true);
 
   onMount(() => {
@@ -20,11 +21,14 @@
           connected = true;
           showConnect = false;
         }
+        if (s.detail) statusDetail = s.detail;
       }).catch(() => {});
     }
 
     createStatusSocket((s) => {
       connected = s.connected;
+      if (s.detail) statusDetail = s.detail;
+      else statusDetail = '';
     });
   });
 
@@ -47,6 +51,9 @@
       <button class="power" onclick={handlePower}>⏻</button>
       <div class="status" class:online={connected}>
         {connected ? 'Connected' : 'Disconnected'}
+        {#if statusDetail}
+          <div class="detail">{statusDetail}</div>
+        {/if}
       </div>
       <button class="settings" onclick={() => showConnect = true}>⚙</button>
     </header>
@@ -89,6 +96,7 @@
     color: var(--accent);
   }
   .status.online { color: #4ade80; }
+  .detail { font-size: 0.7rem; color: #f59e0b; margin-top: 2px; }
   .controls {
     flex: 1;
     display: flex;
