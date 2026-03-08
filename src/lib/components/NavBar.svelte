@@ -1,16 +1,11 @@
 <script lang="ts">
-  import { api } from '$lib/api';
-
-  function send(key: string) {
-    api.key(key);
-    if (navigator.vibrate) navigator.vibrate(30);
-  }
+  import { sendKey } from '$lib/api';
 </script>
 
-<div class="nav-bar">
-  <button onclick={() => send('KEYCODE_BACK')}>↩ Back</button>
-  <button onclick={() => send('KEYCODE_HOME')}>⏺ Home</button>
-  <button onclick={() => send('KEYCODE_MENU')}>☰ Menu</button>
+<div class="nav-bar" role="toolbar" aria-label="Navigation">
+  <button onclick={() => sendKey('KEYCODE_BACK')} aria-label="Back">↩ Back</button>
+  <button onclick={() => sendKey('KEYCODE_HOME')} aria-label="Home">⏺ Home</button>
+  <button onclick={() => sendKey('KEYCODE_MENU')} aria-label="Menu">☰ Menu</button>
 </div>
 
 <style>

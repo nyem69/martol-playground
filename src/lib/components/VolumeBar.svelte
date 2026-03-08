@@ -1,16 +1,11 @@
 <script lang="ts">
-  import { api } from '$lib/api';
-
-  function send(key: string) {
-    api.key(key);
-    if (navigator.vibrate) navigator.vibrate(30);
-  }
+  import { sendKey } from '$lib/api';
 </script>
 
-<div class="volume-bar">
-  <button onclick={() => send('KEYCODE_VOLUME_DOWN')}>🔉</button>
-  <button class="mute" onclick={() => send('KEYCODE_VOLUME_MUTE')}>🔇</button>
-  <button onclick={() => send('KEYCODE_VOLUME_UP')}>🔊</button>
+<div class="volume-bar" role="toolbar" aria-label="Volume controls">
+  <button onclick={() => sendKey('KEYCODE_VOLUME_DOWN')} aria-label="Volume down">🔉</button>
+  <button class="mute" onclick={() => sendKey('KEYCODE_VOLUME_MUTE')} aria-label="Mute">🔇</button>
+  <button onclick={() => sendKey('KEYCODE_VOLUME_UP')} aria-label="Volume up">🔊</button>
 </div>
 
 <style>

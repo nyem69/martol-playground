@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { api, createStatusSocket, type Status } from '$lib/api';
+  import { api, createStatusSocket, sendKey, type Status } from '$lib/api';
   import ConnectScreen from '$lib/components/ConnectScreen.svelte';
   import DPad from '$lib/components/DPad.svelte';
   import NavBar from '$lib/components/NavBar.svelte';
@@ -25,11 +25,13 @@
       }).catch(() => {});
     }
 
-    createStatusSocket((s) => {
+    const cleanup = createStatusSocket((s) => {
       connected = s.connected;
       if (s.detail) statusDetail = s.detail;
       else statusDetail = '';
     });
+
+    return cleanup;
   });
 
   function handleConnected() {
@@ -38,8 +40,7 @@
   }
 
   function handlePower() {
-    api.key('KEYCODE_POWER');
-    if (navigator.vibrate) navigator.vibrate(50);
+    sendKey('KEYCODE_POWER');
   }
 </script>
 
@@ -48,17 +49,17 @@
 {:else}
   <div class="remote">
     <header>
-      <button class="power" onclick={handlePower}>⏻</button>
-      <div class="status" class:online={connected}>
+      <button class="power" onclick={handlePower} aria-label="Power">⏻</button>
+      <div class="status" class:online={connected} aria-live="polite">
         {connected ? 'Connected' : 'Disconnected'}
         {#if statusDetail}
           <div class="detail">{statusDetail}</div>
         {/if}
       </div>
-      <button class="settings" onclick={() => showConnect = true}>⚙</button>
+      <button class="settings" onclick={() => showConnect = true} aria-label="Settings">⚙</button>
     </header>
 
-    <div class="controls">
+    <div class="controls" class:disabled={!connected}>
       <NavBar />
       <DPad />
       <VolumeBar />
@@ -104,5 +105,10 @@
     gap: var(--gap);
     justify-content: space-evenly;
     overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .controls.disabled {
+    opacity: 0.5;
+    pointer-events: none;
   }
 </style>

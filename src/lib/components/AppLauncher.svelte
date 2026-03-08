@@ -11,15 +11,19 @@
     { name: 'Apple TV', pkg: '3201807016597', icon: 'A' },
   ];
 
-  function launch(pkg: string) {
-    api.launch(pkg);
-    if (navigator.vibrate) navigator.vibrate(30);
+  async function launch(pkg: string) {
+    try {
+      navigator.vibrate?.(30);
+      await api.launch(pkg);
+    } catch {
+      // Silently fail — UI stays responsive
+    }
   }
 </script>
 
 <div class="app-launcher">
   {#each apps as app}
-    <button onclick={() => launch(app.pkg)} title={app.name}>
+    <button onclick={() => launch(app.pkg)} title={app.name} aria-label={app.name}>
       <span class="icon">{app.icon}</span>
       <span class="label">{app.name}</span>
     </button>
@@ -39,8 +43,9 @@
     gap: 2px;
     padding: 0.5rem 0.75rem;
     min-width: 56px;
+    min-height: 44px;
     font-size: 0.75rem;
   }
   .icon { font-size: 1.3rem; }
-  .label { font-size: 0.65rem; color: var(--text-muted); }
+  .label { font-size: 0.75rem; color: var(--text-muted); }
 </style>

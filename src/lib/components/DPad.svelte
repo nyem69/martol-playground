@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { api } from '$lib/api';
+  import { sendKey } from '$lib/api';
 
   const KEYS = {
     up: 'KEYCODE_DPAD_UP',
@@ -10,8 +10,7 @@
   };
 
   function send(dir: keyof typeof KEYS) {
-    api.key(KEYS[dir]);
-    if (navigator.vibrate) navigator.vibrate(30);
+    sendKey(KEYS[dir]);
   }
 
   let startX = 0, startY = 0;
@@ -23,6 +22,7 @@
   }
 
   function onTouchEnd(e: TouchEvent) {
+    e.preventDefault();
     const dx = e.changedTouches[0].clientX - startX;
     const dy = e.changedTouches[0].clientY - startY;
     const absDx = Math.abs(dx);
@@ -38,19 +38,39 @@
       send(dy > 0 ? 'down' : 'up');
     }
   }
+
+  function onKeydown(e: KeyboardEvent) {
+    const map: Record<string, keyof typeof KEYS> = {
+      ArrowUp: 'up',
+      ArrowDown: 'down',
+      ArrowLeft: 'left',
+      ArrowRight: 'right',
+      Enter: 'center',
+    };
+    const dir = map[e.key];
+    if (dir) {
+      e.preventDefault();
+      send(dir);
+    }
+  }
 </script>
 
-<div class="dpad-container">
-  <button class="dpad-btn up" onclick={() => send('up')}>▲</button>
-  <button class="dpad-btn left" onclick={() => send('left')}>◀</button>
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+  class="dpad-container"
+  ontouchstart={onTouchStart}
+  ontouchend={onTouchEnd}
+  onkeydown={onKeydown}
+>
+  <button class="dpad-btn up" onclick={() => send('up')} aria-label="Up">▲</button>
+  <button class="dpad-btn left" onclick={() => send('left')} aria-label="Left">◀</button>
   <button
     class="dpad-btn center"
     onclick={() => send('center')}
-    ontouchstart={onTouchStart}
-    ontouchend={onTouchEnd}
+    aria-label="OK"
   >OK</button>
-  <button class="dpad-btn right" onclick={() => send('right')}>▶</button>
-  <button class="dpad-btn down" onclick={() => send('down')}>▼</button>
+  <button class="dpad-btn right" onclick={() => send('right')} aria-label="Right">▶</button>
+  <button class="dpad-btn down" onclick={() => send('down')} aria-label="Down">▼</button>
 </div>
 
 <style>

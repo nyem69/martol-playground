@@ -7,9 +7,14 @@
   async function handleSend() {
     if (!text.trim() || sending) return;
     sending = true;
-    await api.text(text);
-    text = '';
-    sending = false;
+    try {
+      await api.text(text);
+      text = '';
+    } catch {
+      // Silently fail — UI stays responsive
+    } finally {
+      sending = false;
+    }
   }
 </script>
 
@@ -17,6 +22,7 @@
   <input
     type="text"
     placeholder="Type text..."
+    aria-label="Text to send to TV"
     bind:value={text}
     onkeydown={(e) => e.key === 'Enter' && handleSend()}
   />

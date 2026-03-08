@@ -1,10 +1,11 @@
 <script lang="ts">
+  import { browser } from '$app/environment';
   import { api, setServerUrl, getServerUrl } from '$lib/api';
 
   let { onConnected }: { onConnected: () => void } = $props();
 
   let serverUrl = $state(getServerUrl());
-  let ip = $state(localStorage.getItem('tv-ip') || '');
+  let ip = $state(browser ? (localStorage.getItem('tv-ip') || '') : '');
   let error = $state('');
   let loading = $state(false);
 
@@ -47,6 +48,7 @@
     <input
       type="url"
       placeholder="same origin"
+      aria-label="Server URL"
       bind:value={serverUrl}
     />
   </label>
@@ -57,6 +59,8 @@
       type="text"
       inputmode="decimal"
       placeholder="192.168.1.x"
+      aria-label="TV IP address"
+      aria-describedby={error ? 'connect-error' : undefined}
       bind:value={ip}
       onkeydown={(e) => e.key === 'Enter' && handleConnect()}
     />
@@ -67,13 +71,13 @@
   </button>
 
   {#if error}
-    <p class="error">{error}</p>
+    <p class="error" id="connect-error">{error}</p>
   {/if}
 
   <p class="hint">
     1. Run the server on your local network<br/>
     2. Enter the server's IP and port above<br/>
-    3. Enter your Android TV's IP address
+    3. Enter your Samsung TV's IP address
   </p>
 </div>
 
