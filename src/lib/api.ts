@@ -6,8 +6,17 @@ if (browser) {
 }
 
 export function setServerUrl(url: string) {
-  BASE = url.replace(/\/+$/, '');
-  if (browser) localStorage.setItem('server-url', BASE);
+  const trimmed = url.replace(/\/+$/, '');
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      throw new Error('Invalid protocol');
+    }
+    BASE = trimmed;
+    if (browser) localStorage.setItem('server-url', BASE);
+  } catch {
+    throw new Error('Invalid server URL — must start with http:// or https://');
+  }
 }
 
 export function getServerUrl(): string {
@@ -106,14 +115,11 @@ export function createStatusSocket(onStatus: (s: Status) => void): () => void {
       }
     };
 
-    ws.onclose = (e) => {
+    ws.onclose = () => {
       ws = null;
       if (destroyed) return;
-      // Reconnect with exponential backoff, skip for intentional closes (1000)
-      if (e.code !== 1000) {
-        reconnectTimeout = setTimeout(connectWs, backoff);
-        backoff = Math.min(backoff * 2, MAX_BACKOFF);
-      }
+      reconnectTimeout = setTimeout(connectWs, backoff);
+      backoff = Math.min(backoff * 2, MAX_BACKOFF);
     };
 
     ws.onerror = () => {

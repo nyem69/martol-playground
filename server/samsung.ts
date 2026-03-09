@@ -31,7 +31,7 @@ try {
 
 function saveToken(t: string) {
   try {
-    writeFileSync(TOKEN_FILE, JSON.stringify({ token: t }), 'utf-8');
+    writeFileSync(TOKEN_FILE, JSON.stringify({ token: t }), { encoding: 'utf-8', mode: 0o600 });
   } catch (err) {
     console.error('[samsung] Failed to save token:', (err as Error).message);
   }
@@ -55,6 +55,8 @@ function isValidIp(ip: string): boolean {
   const octets = [match[1], match[2], match[3], match[4]].map(Number);
   if (octets.some(o => o > 255)) return false;
   if (octets[0] === 127) return false; // reject loopback
+  if (octets[0] === 0) return false; // reject 0.0.0.0/8
+  if (octets[0] === 169 && octets[1] === 254) return false; // reject link-local / cloud metadata
   return true;
 }
 
@@ -73,9 +75,10 @@ function stopPing() {
   }
 }
 
-function startPing(socket: WebSocket) {
+function startPing(socket: WebSocket, gen: number) {
   stopPing();
   pingInterval = setInterval(() => {
+    if (gen !== connectGeneration) { stopPing(); return; }
     if (socket.readyState === WebSocket.OPEN) {
       socket.ping();
     } else {
@@ -106,6 +109,9 @@ export async function connect(ip: string): Promise<string> {
       reject(new Error('Connection timeout — make sure the TV is on and check for a permission popup'));
     }, 15000);
 
+    // Samsung TVs use self-signed certs on port 8002 — TLS validation disabled intentionally.
+    // This is a known trade-off for LAN-only use. If deployed over untrusted networks,
+    // consider pinning the TV's certificate on first connection.
     const socket = new WebSocket(url, { rejectUnauthorized: false });
 
     socket.on('open', () => {
@@ -141,7 +147,7 @@ export async function connect(ip: string): Promise<string> {
         ws = socket;
         tvIp = ip;
         isConnected = true;
-        startPing(socket);
+        startPing(socket, generation);
         resolve(`Connected to ${tvName}`);
       } else if (msg.event === 'ms.channel.unauthorized') {
         clearTimeout(timeout);
@@ -155,7 +161,12 @@ export async function connect(ip: string): Promise<string> {
 
     socket.on('close', () => {
       console.log('[samsung] WebSocket closed');
+      clearTimeout(timeout);
       stopPing();
+      if (generation !== connectGeneration) {
+        reject(new Error('Superseded by new connection'));
+        return;
+      }
       isConnected = false;
       ws = null;
     });
@@ -164,6 +175,10 @@ export async function connect(ip: string): Promise<string> {
       console.error(`[samsung] Error: ${err.message}`);
       clearTimeout(timeout);
       stopPing();
+      if (generation !== connectGeneration) {
+        reject(new Error('Superseded by new connection'));
+        return;
+      }
       isConnected = false;
       ws = null;
       reject(err);

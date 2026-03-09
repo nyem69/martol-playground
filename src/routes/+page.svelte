@@ -45,7 +45,7 @@
 </script>
 
 {#if showConnect}
-  <ConnectScreen onConnected={handleConnected} />
+  <ConnectScreen onConnected={handleConnected} onDismiss={connected ? () => showConnect = false : undefined} />
 {:else}
   <div class="remote">
     <header>

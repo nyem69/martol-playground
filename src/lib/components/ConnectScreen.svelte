@@ -2,7 +2,7 @@
   import { browser } from '$app/environment';
   import { api, setServerUrl, getServerUrl } from '$lib/api';
 
-  let { onConnected }: { onConnected: () => void } = $props();
+  let { onConnected, onDismiss }: { onConnected: () => void; onDismiss?: () => void } = $props();
 
   let serverUrl = $state(getServerUrl());
   let ip = $state(browser ? (localStorage.getItem('tv-ip') || '') : '');
@@ -74,6 +74,10 @@
     <p class="error" id="connect-error">{error}</p>
   {/if}
 
+  {#if onDismiss}
+    <button class="dismiss-btn" onclick={onDismiss} aria-label="Back to remote">← Back</button>
+  {/if}
+
   <p class="hint">
     1. Run the server on your local network<br/>
     2. Enter the server's IP and port above<br/>
@@ -123,5 +127,14 @@
     background: var(--accent);
   }
   .error { color: var(--accent); }
+  .dismiss-btn {
+    width: 100%;
+    max-width: 320px;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    background: transparent;
+    border: 1px solid var(--bg-button);
+    color: var(--text-muted);
+  }
   .hint { color: var(--text-muted); font-size: 0.8rem; margin-top: 1rem; line-height: 1.6; }
 </style>

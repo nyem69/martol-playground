@@ -10,7 +10,17 @@ import { connect, disconnect, sendKey, sendText, launchApp, getStatus, KEY_MAP }
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      connectSrc: ["'self'", "ws:", "wss:"],
+      imgSrc: ["'self'", "data:"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+    },
+  },
+}));
 app.use(express.json());
 
 const apiLimiter = rateLimit({
@@ -26,16 +36,29 @@ const wss = new WebSocketServer({
   server,
   path: '/api/ws',
   verifyClient: (info: { origin: string; req: IncomingMessage }) => {
+    // Per-IP connection limit
+    const ip = info.req.socket.remoteAddress || '';
+    if ((wsConnectionsByIp.get(ip) || 0) >= MAX_WS_PER_IP) return false;
+
     const origin = info.origin || info.req.headers.origin || '';
-    // Allow same-origin and local connections
-    if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1')) {
-      return true;
+    // Allow connections with no origin (non-browser clients)
+    if (!origin) return true;
+    try {
+      const url = new URL(origin);
+      const host = info.req.headers.host || '';
+      // Allow same-origin (parsed origin host matches request Host header)
+      if (host && url.host === host) return true;
+      // Allow localhost/127.0.0.1 exactly
+      if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return true;
+      return false;
+    } catch {
+      return false;
     }
-    // In production, the frontend is served from the same origin
-    const host = info.req.headers.host || '';
-    return origin.includes(host);
   },
 });
+
+const wsConnectionsByIp = new Map<string, number>();
+const MAX_WS_PER_IP = 5;
 
 let lastStatus: object | null = null;
 
@@ -50,9 +73,16 @@ function broadcast(data: object) {
 // Ping/pong keepalive for browser clients
 const clientAlive = new WeakMap<WebSocket, boolean>();
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
+  const ip = req.socket.remoteAddress || '';
+  wsConnectionsByIp.set(ip, (wsConnectionsByIp.get(ip) || 0) + 1);
   clientAlive.set(ws, true);
   ws.on('pong', () => clientAlive.set(ws, true));
+  ws.on('close', () => {
+    const count = wsConnectionsByIp.get(ip) || 1;
+    if (count <= 1) wsConnectionsByIp.delete(ip);
+    else wsConnectionsByIp.set(ip, count - 1);
+  });
 });
 
 const pingClients = setInterval(() => {
@@ -118,7 +148,7 @@ app.post('/api/text', async (req, res) => {
       res.status(400).json({ ok: false, error: 'Text is required' });
       return;
     }
-    await sendText(text);
+    await sendText(text.trim());
     res.json({ ok: true });
   } catch (e: any) {
     res.status(500).json({ ok: false, error: 'Failed to send text' });
